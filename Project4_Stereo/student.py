@@ -32,16 +32,29 @@ def compute_photometric_stereo_impl(lights, images):
     # Create I a vector of N images from the list images by reshaping such
     # that each image is an array of size 1980*1080*c with c=3 for RGB or 1 for greyscale
     images_shape = np.shape(images)
-    I = np.array(images).reshape(images_shape[0], np.prod(images_shape[1:]))
+
+    # ---------------------------
+    # TODO 1-1: images 리스트를 (N, H*W*C) 형태의 행렬 I로 변환
+    # ---------------------------
+    I = ___
 
     # Compute the product of L transpose and L; then get it inverse 
-    L_t_L_inv = np.linalg.inv(np.dot(lights.T, lights))
+    # ---------------------------
+    # TODO 1-2: L^T L 의 역행렬 계산
+    # ---------------------------
+    L_t_L_inv = ___
 
     # Compute the product of L transpose and I 
-    L_t_I = np.dot(lights.T, I)
+    # ---------------------------
+    # TODO 1-3: L^T I 계산
+    # ---------------------------
+    L_t_I = ___
 
     # Compute G
-    G = np.dot(L_t_L_inv, L_t_I)
+    # ---------------------------
+    # TODO 1-4: G = (L^T L)^(-1) (L^T I)
+    # ---------------------------
+    G = ___
 
     # Albedo
     # Reshape the image back from an array of 1980x1080xc to an array of 3 dimensions
@@ -49,7 +62,11 @@ def compute_photometric_stereo_impl(lights, images):
     G_shape = [G.shape[0]]
     G_shape.extend(images_shape[1:])
     G_albedo = G.reshape(G_shape)
-    albedo = np.linalg.norm(G_albedo, axis=0)
+
+    # ---------------------------
+    # TODO 2-1: albedo = 각 픽셀별 L2 norm (채널 방향으로 norm)
+    # ---------------------------
+    albedo = ___
 
     # Normals
     # Use the norm after getting an average on all the colors and divide the norm
@@ -57,10 +74,22 @@ def compute_photometric_stereo_impl(lights, images):
     G_shape = []
     G_shape.extend(images_shape[1:])
     G_shape.append(3)
-    G_normal = np.mean(G.T.reshape(G_shape), axis=2)
-    albedo_normal = np.linalg.norm(G_normal, axis=2)
+
+    # ---------------------------
+    # TODO 2-2: G를 (H, W, 3, C)로 보고 채널 방향 평균을 내어 G_normal 계산
+    # ---------------------------
+    G_normal = ___
+
+    # ---------------------------
+    # TODO 2-3: 각 위치에서의 norm (크기) 계산
+    # ---------------------------
+    albedo_normal = ___
+
     threshold = 1e-7
-    G_normal = G_normal/(1.0*np.maximum(threshold, albedo_normal[:,:,None]))
+    # ---------------------------
+    # TODO 2-4: norm이 너무 작은 경우 threshold로 나눠서 unit normal 벡터 만들기
+    # ---------------------------
+    G_normal = ___
 
     # There may be NaN values due to a division by zero
     normals = np.nan_to_num(G_normal)
@@ -78,18 +107,31 @@ def project_impl(K, Rt, points):
         projections -- height x width x 2 array of 2D projections
     """
     # Create projection matrix
-    projection_Matrix = np.dot(K, Rt)
+    # ---------------------------
+    # TODO 5-1: 투영 행렬 P = K [R|t] 계산
+    # ---------------------------
+    projection_Matrix = ___
 
     # Switch from 3D coordinates to homogeneous coordinates
     extra_ones = np.tile([1], points.shape[0]*points.shape[1])
     extra_ones = extra_ones.reshape((points.shape[0], points.shape[1],1))
     h_points = np.concatenate((points, extra_ones), axis=2)
-    xs  = np.dot(h_points, projection_Matrix.T)
+
+    # ---------------------------
+    # TODO 5-2: 동차좌표계에서 카메라로 투영 (x = P X_h)
+    # ---------------------------
+    xs  = ___
+
     # Normalize to convert back from homogeneous coordinates to 2D coordinates
     deno = xs[:,:,2][:,:,np.newaxis]
-    normalized_xs = xs / deno
+
+    # ---------------------------
+    # TODO 5-3: z로 나눠서 (u, v) 좌표로 정규화
+    # ---------------------------
+    normalized_xs = ___
 
     return normalized_xs[:,:,:2]
+
 
 def get_pixel_values(img, i, j, u, v, isGrayscale):
     """
@@ -158,12 +200,28 @@ def preprocess_ncc_impl(image, ncc_size):
         for j in range(mid_kernel, width - mid_kernel):
             windows = []
             for u in range(channel):
-                window = image[i - mid_kernel : i + mid_kernel + 1, j - mid_kernel : j + mid_kernel + 1, u]
-                window = (window - np.mean(window)).flatten()
+                window = image[i - mid_kernel : i + mid_kernel + 1,
+                               j - mid_kernel : j + mid_kernel + 1, u]
+
+                # ---------------------------
+                # TODO 3-1: 채널별 평균을 빼고, 벡터로 펼치기
+                # ---------------------------
+                window = ___
+
                 windows.append(window.T)
+
             flatten = np.array(windows).flatten()
-            norm = np.linalg.norm(flatten)
-            flatten = flatten / norm if norm > 1e-6 else np.zeros(flatten.shape)
+
+            # ---------------------------
+            # TODO 3-2: flatten 벡터의 L2 norm 계산
+            # ---------------------------
+            norm = ___
+
+            # ---------------------------
+            # TODO 3-3: norm >= 1e-6 이면 정규화, 아니면 0 벡터
+            # ---------------------------
+            flatten = ___
+
             normalized[i,j] = flatten
     return normalized
 
@@ -180,5 +238,9 @@ def compute_ncc_impl(image1, image2):
         ncc -- height x width normalized cross correlation between image1 and
                image2.
     """
-    ncc = np.sum(np.multiply(image1, image2), axis = 2)
+    # ---------------------------
+    # TODO 3-4: 채널/피처 차원(axis=2) 방향으로 내적 합산
+    # ---------------------------
+    ncc = ___
+
     return ncc
